@@ -1,192 +1,301 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Badminton Auslosung</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 16px;
-      background: #f6f7f9;
-    }
-    h1 { font-size: 1.4rem; }
-    h2 { font-size: 1.1rem; margin-top: 24px; }
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
-    button {
-      width: 100%;
-      padding: 14px;
-      font-size: 1rem;
-      border-radius: 10px;
-      border: none;
-      background: #2563eb;
-      color: white;
-      margin-top: 8px;
-    }
-    button.secondary {
-      background: #64748b;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      font-size: 1rem;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    .player {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 6px 0;
-    }
-    .court {
-      margin-bottom: 16px;
-    }
-    .pause {
-      color: #b91c1c;
-      font-weight: 600;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Badminton Auslosung</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; font-family: -apple-system, sans-serif; }
+        body { background: var(--bg); color: var(--text); margin: 0; padding: 15px; padding-bottom: 50px; }
+        h2, h3 { margin-top: 0; }
+
+        .container { max-width: 600px; margin: 0 auto; }
+        .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        /* Formular-Elemente */
+        .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        input[type="text"], input[type="date"] { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; }
+        button { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: opacity 0.2s; }
+        button:active { opacity: 0.7; }
+        .btn-primary { background: var(--primary); color: white; width: 100%; }
+        .btn-add { background: var(--text); color: white; }
+        .btn-accept { background: var(--success); color: white; flex: 1; }
+        .btn-reject { background: var(--danger); color: white; flex: 1; }
+
+        /* Spielerliste */
+        .player-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .player-item:last-child { border: none; }
+        .checkbox-wrapper { display: flex; align-items: center; gap: 10px; font-size: 16px; }
+        input[type="checkbox"] { width: 20px; height: 20px; }
+
+        /* Platz-Konfig */
+        .court-config { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+        select { padding: 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 14px; }
+
+        /* Ergebnis & Historie */
+        .match-display { background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
+        .pause-display { color: #64748b; font-style: italic; margin-top: 10px; }
+        .history-entry { border-left: 3px solid var(--border); padding-left: 10px; margin-bottom: 20px; font-size: 14px; }
+        .history-round { font-weight: bold; color: var(--primary); display: block; margin-bottom: 5px; }
+
+        .hidden { display: none; }
+    </style>
 </head>
 <body>
 
-<h1>🏸 Badminton Auslosung</h1>
+<div class="container">
+    <h2>🏸 Badminton Auslosung</h2>
 
-<div class="card">
-  <h2>Spieler</h2>
-  <div id="players"></div>
-  <input type="text" id="newPlayer" placeholder="Spieler hinzufügen" />
-  <button onclick="addPlayer()">+ Spieler hinzufügen</button>
-</div>
+    <div class="card">
+        <h3>Spieler (<span id="activeCount">0</span> aktiv)</h3>
+        <div class="flex-row">
+            <input type="text" id="playerName" placeholder="Name eingeben...">
+            <button class="btn-add" id="btnAddPlayer">Hinzufügen</button>
+        </div>
+        <div id="playerList"></div>
+    </div>
 
-<div class="card">
-  <h2>Plätze</h2>
-  <div class="player"><strong>Platz 1:</strong>
-    <label><input type="radio" name="court1" value="double" checked> Doppel</label>
-    <label><input type="radio" name="court1" value="single"> Einzel</label>
-  </div>
-  <div class="player"><strong>Platz 2:</strong>
-    <label><input type="radio" name="court2" value="double"> Doppel</label>
-    <label><input type="radio" name="court2" value="single" checked> Einzel</label>
-  </div>
-  <div class="player"><strong>Platz 3:</strong>
-    <label><input type="radio" name="court3" value="double"> Doppel</label>
-    <label><input type="radio" name="court3" value="single" checked> Einzel</label>
-  </div>
-</div>
+    <div class="card">
+        <h3>Plätze</h3>
+        <div id="courtSettings">
+            <div class="court-config"><span>Platz 1</span><select id="c1"><option value="4">Doppel (4)</option><option value="2">Einzel (2)</option><option value="0">Aus</option></select></div>
+            <div class="court-config"><span>Platz 2</span><select id="c2"><option value="4">Doppel (4)</option><option value="2">Einzel (2)</option><option value="0">Aus</option></select></div>
+            <div class="court-config"><span>Platz 3</span><select id="c3"><option value="4">Doppel (4)</option><option value="2">Einzel (2)</option><option value="0">Aus</option></select></div>
+        </div>
+        <button class="btn-primary" style="margin-top:10px;" id="btnDraw">Auslosen</button>
+    </div>
 
-<div class="card">
-  <button onclick="drawRound()">🎲 Auslosen</button>
-  <button class="secondary" onclick="resetDay()">🔄 Tag zurücksetzen</button>
-</div>
+    <div id="previewArea" class="card hidden">
+        <h3>Vorschau</h3>
+        <div id="matchPreview"></div>
+        <div class="flex-row" style="margin-top:15px;">
+            <button class="btn-reject" id="btnReject">Ablehnen</button>
+            <button class="btn-accept" id="btnAccept">Akzeptieren</button>
+        </div>
+    </div>
 
-<div class="card" id="result">
-  <h2>Ergebnis</h2>
-  <div id="output">Noch keine Auslosung.</div>
+    <div class="card">
+        <div class="flex-row" style="align-items: center;">
+            <h3 style="margin:0">Dokumentation</h3>
+            <input type="date" id="docDate">
+        </div>
+        <hr style="border:0; border-top:1px solid var(--border); margin:15px 0;">
+        <div id="historyList"></div>
+    </div>
 </div>
 
 <script>
-const MAX_COURTS = 3;
-let players = JSON.parse(localStorage.getItem('players')) || [];
-let history = JSON.parse(localStorage.getItem('history')) || { pairings: [], pauses: {} };
+    // State Management
+    let state = {
+        players: [], // { name: string, active: bool, pauses: int }
+        history: [], // { date: string, rounds: [] }
+        currentDraft: null
+    };
 
-function save() {
-  localStorage.setItem('players', JSON.stringify(players));
-  localStorage.setItem('history', JSON.stringify(history));
-}
+    // Initialisierung
+    document.addEventListener('DOMContentLoaded', () => {
+        const saved = localStorage.getItem('badmintonState');
+        if (saved) {
+            state = JSON.parse(saved);
+        }
+        document.getElementById('docDate').valueAsDate = new Date();
+        renderPlayers();
+        renderHistory();
+        
+        // Event Listeners (ohne innerHTML Zerstörung)
+        document.getElementById('btnAddPlayer').onclick = addPlayer;
+        document.getElementById('btnDraw').onclick = drawMatches;
+        document.getElementById('btnAccept').onclick = acceptDraw;
+        document.getElementById('btnReject').onclick = drawMatches;
+    });
 
-function renderPlayers() {
-  const div = document.getElementById('players');
-  div.innerHTML = '';
-  players.forEach((p, i) => {
-    const row = document.createElement('div');
-    row.className = 'player';
-    row.innerHTML = `<input type="checkbox" ${p.active ? 'checked' : ''} onchange="toggle(${i})"> ${p.name}`;
-    div.appendChild(row);
-  });
-}
-
-function addPlayer() {
-  const input = document.getElementById('newPlayer');
-  if (!input.value.trim()) return;
-  players.push({ name: input.value.trim(), active: true });
-  input.value = '';
-  save();
-  renderPlayers();
-}
-
-function toggle(i) {
-  players[i].active = !players[i].active;
-  save();
-}
-
-function shuffle(arr) {
-  return arr.sort(() => Math.random() - 0.5);
-}
-
-function drawRound() {
-  const active = players.filter(p => p.active).map(p => p.name);
-  if (active.length < 4) {
-    alert('Mindestens 4 aktive Spieler nötig.');
-    return;
-  }
-
-  shuffle(active);
-
-  const courts = [];
-  const used = new Set();
-
-  while (courts.length < MAX_COURTS && active.length >= 4) {
-    const team1 = [active.shift(), active.shift()];
-    const team2 = [active.shift(), active.shift()];
-    const key = [...team1, ...team2].sort().join('-');
-
-    if (history.pairings.includes(key)) {
-      active.push(...team1, ...team2);
-      shuffle(active);
-      break;
+    function save() {
+        localStorage.setItem('badmintonState', JSON.stringify(state));
     }
 
-    history.pairings.push(key);
-    courts.push({ team1, team2 });
-  }
+    function addPlayer() {
+        const input = document.getElementById('playerName');
+        const name = input.value.trim();
+        if (name) {
+            state.players.push({ name, active: true, pauses: 0 });
+            input.value = '';
+            renderPlayers();
+            save();
+        }
+    }
 
-  // Pause fair verteilen
-  active.forEach(p => {
-    history.pauses[p] = (history.pauses[p] || 0) + 1;
-  });
+    function togglePlayer(index) {
+        state.players[index].active = !state.players[index].active;
+        renderPlayers();
+        save();
+    }
 
-  save();
+    function renderPlayers() {
+        const list = document.getElementById('playerList');
+        list.innerHTML = '';
+        let activeCounter = 0;
+        
+        state.players.forEach((p, i) => {
+            if(p.active) activeCounter++;
+            const div = document.createElement('div');
+            div.className = 'player-item';
+            div.innerHTML = `
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" ${p.active ? 'checked' : ''} onchange="togglePlayer(${i})">
+                    <span>${p.name} (${p.pauses})</span>
+                </div>
+                <button onclick="removePlayer(${i})" style="background:none; color:var(--danger); padding:5px;">✕</button>
+            `;
+            list.appendChild(div);
+        });
+        document.getElementById('activeCount').innerText = activeCounter;
+    }
 
-  const out = document.getElementById('output');
-  out.innerHTML = '';
+    function removePlayer(index) {
+        state.players.splice(index, 1);
+        renderPlayers();
+        save();
+    }
 
-  courts.forEach((c, i) => {
-    out.innerHTML += `<div class="court"><strong>Platz ${i+1}</strong><br>
-      ${c.team1.join(' / ')} vs. ${c.team2.join(' / ')}</div>`;
-  });
+ function drawMatches() {
+    const activePlayers = state.players.filter(p => p.active);
+    const courts = [
+        parseInt(document.getElementById('c1').value),
+        parseInt(document.getElementById('c2').value),
+        parseInt(document.getElementById('c3').value)
+    ];
 
-  if (active.length) {
-    out.innerHTML += `<div class="pause">Pause: ${active.join(', ')}</div>`;
-  }
+    // Berechnung: Wie viele Spieler werden insgesamt für die Plätze benötigt?
+    const totalNeeded = courts.reduce((a, b) => a + b, 0);
+
+    if (activePlayers.length < 2) {
+        alert("Nicht genügend aktive Spieler!");
+        return;
+    }
+
+    // --- FAIRNESS LOGIK ---
+    // Wir sortieren so, dass Leute mit VIELEN Pausen oben stehen (Priorität für das Spiel).
+    // Leute mit WENIGEN Pausen landen unten im Pool und müssen eher pausieren.
+    let pool = [...activePlayers].sort((a, b) => {
+        // Sortierung absteigend nach Pausen
+        if (b.pauses !== a.pauses) {
+            return b.pauses - a.pauses; 
+        }
+        // Bei gleicher Pausenzahl entscheidet der Zufall
+        return Math.random() - 0.5;
+    });
+
+    let matches = [];
+    
+    // Wir füllen die Plätze nacheinander mit den Spielern, die am längsten nicht pausiert haben
+    courts.forEach((size, index) => {
+        if (size > 0 && pool.length >= size) {
+            const team = pool.splice(0, size);
+            
+            if (size === 4) {
+                matches.push({ type: 'Doppel', court: index + 1, p: team.map(t => t.name) });
+            } else if (size === 2) {
+                matches.push({ type: 'Einzel', court: index + 1, p: team.map(t => t.name) });
+            }
+        }
+    });
+
+    // Die Übriggebliebenen im Pool sind die, die pausieren müssen.
+    // Da wir oben die mit den meisten Pausen zuerst rausgepickt haben,
+    // bleiben hier die mit den wenigsten Pausen übrig.
+    const pausePlayers = pool.map(p => ({ name: p.name, total: p.pauses + 1 }));
+
+    state.currentDraft = { matches, pauses: pausePlayers };
+    showPreview(state.currentDraft);
 }
 
-function resetDay() {
-  if (!confirm('Paarungen und Pausen für heute zurücksetzen?')) return;
-  history = { pairings: [], pauses: {} };
-  save();
-  document.getElementById('output').innerHTML = 'Zurückgesetzt.';
-}
+    function showPreview(draft) {
+        const area = document.getElementById('previewArea');
+        const display = document.getElementById('matchPreview');
+        area.classList.remove('hidden');
+        
+        display.innerHTML = draft.matches.map(m => `
+            <div class="match-display">
+                <strong>Platz ${m.court} (${m.type}):</strong><br>
+                ${m.type === 'Doppel' ? `${m.p[0]} / ${m.p[1]} vs. ${m.p[2]} / ${m.p[3]}` : `${m.p[0]} vs. ${m.p[1]}`}
+            </div>
+        `).join('');
 
-renderPlayers();
+        if (draft.pauses.length > 0) {
+            display.innerHTML += `<div class="pause-display">Pause: ${draft.pauses.map(p => `${p.name} (${p.total})`).join(', ')}</div>`;
+        }
+    }
+
+    function acceptDraw() {
+        if (!state.currentDraft) return;
+
+        const date = document.getElementById('docDate').value;
+        
+        // Pausen-Zähler im Haupt-State erhöhen
+        state.currentDraft.pauses.forEach(pp => {
+            const player = state.players.find(p => p.name === pp.name);
+            if (player) player.pauses++;
+        });
+
+        // In Historie speichern
+        let dayEntry = state.history.find(h => h.date === date);
+        if (!dayEntry) {
+            dayEntry = { date: date, rounds: [] };
+            state.history.push(dayEntry);
+        }
+
+        dayEntry.rounds.push({
+            matches: state.currentDraft.matches,
+            pauses: state.currentDraft.pauses
+        });
+
+        state.currentDraft = null;
+        document.getElementById('previewArea').classList.add('hidden');
+        renderPlayers();
+        renderHistory();
+        save();
+    }
+
+    function renderHistory() {
+        const date = document.getElementById('docDate').value;
+        const list = document.getElementById('historyList');
+        list.innerHTML = '';
+
+        const dayEntry = state.history.find(h => h.date === date);
+        if (!dayEntry || dayEntry.rounds.length === 0) {
+            list.innerHTML = '<p style="color:#64748b">Noch keine Runden für heute.</p>';
+            return;
+        }
+
+        [...dayEntry.rounds].reverse().forEach((r, i) => {
+            const div = document.createElement('div');
+            div.className = 'history-entry';
+            const roundNum = dayEntry.rounds.length - i;
+            
+            let html = `<span class="history-round">Runde ${roundNum}</span>`;
+            r.matches.forEach(m => {
+                html += `<div>Pl. ${m.court}: ${m.type === 'Doppel' ? `${m.p[0]}/${m.p[1]} vs ${m.p[2]}/${m.p[3]}` : `${m.p[0]} vs ${m.p[1]}`}</div>`;
+            });
+            if(r.pauses.length > 0) {
+                html += `<div style="color:#64748b">Pause: ${r.pauses.map(p => `${p.name}(${p.total})`).join(', ')}</div>`;
+            }
+            div.innerHTML = html;
+            list.appendChild(div);
+        });
+    }
+
+    // Datum-Wechsel Update
+    document.getElementById('docDate').onchange = renderHistory;
 </script>
 
 </body>
