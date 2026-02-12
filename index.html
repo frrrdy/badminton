@@ -23,12 +23,24 @@
         .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
         /* Formular-Elemente */
-        .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        input[type="text"], input[type="date"] { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; }
+        .flex-row { display: flex; 
+    gap: 8px; /* Etwas schmalerer Abstand für Mobile */
+    margin-bottom: 10px; 
+    align-items: center; /* Zentriert Input und Button vertikal */ }
+        input[type="text"], input[type="date"] { flex: 1; 
+    min-width: 0; /* Verhindert, dass das Input-Feld den Container sprengt */
+    padding: 12px; 
+    border: 1px solid var(--border); 
+    border-radius: 8px; 
+    font-size: 16px; }
         button { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: opacity 0.2s; }
         button:active { opacity: 0.7; }
         .btn-primary { background: var(--primary); color: white; width: 100%; }
-        .btn-add { background: var(--text); color: white; }
+        .btn-add { background: var(--text); 
+    color: white; 
+    white-space: nowrap; /* Verhindert Zeilenumbruch im Button */
+    padding: 12px 15px; /* Reduziertes seitliches Padding */
+    flex-shrink: 0; /* Verhindert, dass der Button zusammengedrückt wird */ }
         .btn-accept { background: var(--success); color: white; flex: 1; }
         .btn-reject { background: var(--danger); color: white; flex: 1; }
 
