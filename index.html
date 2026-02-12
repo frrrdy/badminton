@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Badminton Auslosung</title>
+    <title>Badminton Auslosung Pro</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -22,41 +22,39 @@
         .container { max-width: 600px; margin: 0 auto; }
         .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        /* Formular-Elemente */
-        .flex-row { display: flex; 
-    gap: 8px; /* Etwas schmalerer Abstand für Mobile */
-    margin-bottom: 10px; 
-    align-items: center; /* Zentriert Input und Button vertikal */ }
-        input[type="text"], input[type="date"] { flex: 1; 
-    min-width: 0; /* Verhindert, dass das Input-Feld den Container sprengt */
-    padding: 12px; 
-    border: 1px solid var(--border); 
-    border-radius: 8px; 
-    font-size: 16px; }
+        /* Formular-Elemente Mobile Optimiert */
+        .flex-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+        input[type="text"], input[type="date"] { 
+            flex: 1; 
+            min-width: 0; 
+            padding: 12px; 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            font-size: 16px; 
+            -webkit-appearance: none;
+        }
+        
         button { padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: opacity 0.2s; }
         button:active { opacity: 0.7; }
+        
         .btn-primary { background: var(--primary); color: white; width: 100%; }
-        .btn-add { background: var(--text); 
-    color: white; 
-    white-space: nowrap; /* Verhindert Zeilenumbruch im Button */
-    padding: 12px 15px; /* Reduziertes seitliches Padding */
-    flex-shrink: 0; /* Verhindert, dass der Button zusammengedrückt wird */ }
+        .btn-add { background: var(--text); color: white; flex-shrink: 0; white-space: nowrap; padding: 12px 15px; }
         .btn-accept { background: var(--success); color: white; flex: 1; }
         .btn-reject { background: var(--danger); color: white; flex: 1; }
+        .btn-reset { background: none; color: var(--danger); border: 1px solid var(--danger); font-size: 12px; padding: 5px 10px; margin-top: 10px; width: 100%; }
 
         /* Spielerliste */
         .player-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
-        .player-item:last-child { border: none; }
         .checkbox-wrapper { display: flex; align-items: center; gap: 10px; font-size: 16px; }
-        input[type="checkbox"] { width: 20px; height: 20px; }
+        input[type="checkbox"] { width: 22px; height: 22px; }
 
         /* Platz-Konfig */
         .court-config { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
-        select { padding: 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 14px; }
+        select { padding: 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 14px; background: white; }
 
         /* Ergebnis & Historie */
-        .match-display { background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
-        .pause-display { color: #64748b; font-style: italic; margin-top: 10px; }
+        .match-display { background: #f1f5f9; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary); font-size: 15px; }
+        .pause-display { color: #64748b; font-style: italic; margin-top: 10px; font-size: 14px; }
         .history-entry { border-left: 3px solid var(--border); padding-left: 10px; margin-bottom: 20px; font-size: 14px; }
         .history-round { font-weight: bold; color: var(--primary); display: block; margin-bottom: 5px; }
 
@@ -71,7 +69,7 @@
     <div class="card">
         <h3>Spieler (<span id="activeCount">0</span> aktiv)</h3>
         <div class="flex-row">
-            <input type="text" id="playerName" placeholder="Name eingeben...">
+            <input type="text" id="playerName" placeholder="Name...">
             <button class="btn-add" id="btnAddPlayer">Hinzufügen</button>
         </div>
         <div id="playerList"></div>
@@ -82,7 +80,7 @@
         <div id="courtSettings">
             <div class="court-config"><span>Platz 1</span><select id="c1"><option value="4">Doppel (4)</option><option value="2">Einzel (2)</option><option value="0">Aus</option></select></div>
             <div class="court-config"><span>Platz 2</span><select id="c2"><option value="4">Doppel (4)</option><option value="2">Einzel (2)</option><option value="0">Aus</option></select></div>
-            <div class="court-config"><span>Platz 3</span><select id="c3"><option value="4">Doppel (4)</option><option value="2">Einzel (2)</option><option value="0">Aus</option></select></div>
+            <div class="court-config"><span>Platz 3</span><select id="c3"><option value="0">Aus</option><option value="4">Doppel (4)</option><option value="2">Einzel (2)</option></select></div>
         </div>
         <button class="btn-primary" style="margin-top:10px;" id="btnDraw">Auslosen</button>
     </div>
@@ -91,48 +89,50 @@
         <h3>Vorschau</h3>
         <div id="matchPreview"></div>
         <div class="flex-row" style="margin-top:15px;">
-            <button class="btn-reject" id="btnReject">Ablehnen</button>
-            <button class="btn-accept" id="btnAccept">Akzeptieren</button>
+            <button class="btn-reject" id="btnReject">Neu losen</button>
+            <button class="btn-accept" id="btnAccept">Bestätigen</button>
         </div>
     </div>
 
     <div class="card">
-        <div class="flex-row" style="align-items: center;">
-            <h3 style="margin:0">Dokumentation</h3>
-            <input type="date" id="docDate">
+        <div class="flex-row">
+            <h3 style="margin:0; flex:1;">Historie</h3>
+            <input type="date" id="docDate" style="padding: 5px; font-size: 14px;">
         </div>
         <hr style="border:0; border-top:1px solid var(--border); margin:15px 0;">
         <div id="historyList"></div>
+        
+        <button class="btn-reset" id="btnResetData">Pausen & Historie zurücksetzen</button>
     </div>
 </div>
 
 <script>
-    // State Management
     let state = {
-        players: [], // { name: string, active: bool, pauses: int }
-        history: [], // { date: string, rounds: [] }
-        currentDraft: null
+        players: [], 
+        history: [], 
+        currentDraft: null,
+        interactions: { with: {}, against: {} }
     };
 
-    // Initialisierung
     document.addEventListener('DOMContentLoaded', () => {
-        const saved = localStorage.getItem('badmintonState');
-        if (saved) {
-            state = JSON.parse(saved);
-        }
+        const saved = localStorage.getItem('badmintonStatePro');
+        if (saved) state = JSON.parse(saved);
+        if (!state.interactions) state.interactions = { with: {}, against: {} };
+        
         document.getElementById('docDate').valueAsDate = new Date();
         renderPlayers();
         renderHistory();
         
-        // Event Listeners (ohne innerHTML Zerstörung)
         document.getElementById('btnAddPlayer').onclick = addPlayer;
         document.getElementById('btnDraw').onclick = drawMatches;
         document.getElementById('btnAccept').onclick = acceptDraw;
         document.getElementById('btnReject').onclick = drawMatches;
+        document.getElementById('btnResetData').onclick = resetStats;
+        document.getElementById('docDate').onchange = renderHistory;
     });
 
     function save() {
-        localStorage.setItem('badmintonState', JSON.stringify(state));
+        localStorage.setItem('badmintonStatePro', JSON.stringify(state));
     }
 
     function addPlayer() {
@@ -152,6 +152,14 @@
         save();
     }
 
+    function removePlayer(index) {
+        if(confirm('Spieler wirklich löschen?')) {
+            state.players.splice(index, 1);
+            renderPlayers();
+            save();
+        }
+    }
+
     function renderPlayers() {
         const list = document.getElementById('playerList');
         list.innerHTML = '';
@@ -164,7 +172,7 @@
             div.innerHTML = `
                 <div class="checkbox-wrapper">
                     <input type="checkbox" ${p.active ? 'checked' : ''} onchange="togglePlayer(${i})">
-                    <span>${p.name} (${p.pauses})</span>
+                    <span>${p.name} <small style="color:#64748b">(P: ${p.pauses})</small></span>
                 </div>
                 <button onclick="removePlayer(${i})" style="background:none; color:var(--danger); padding:5px;">✕</button>
             `;
@@ -173,63 +181,61 @@
         document.getElementById('activeCount').innerText = activeCounter;
     }
 
-    function removePlayer(index) {
-        state.players.splice(index, 1);
-        renderPlayers();
-        save();
+    function getInter(type, p1, p2) {
+        const key = [p1, p2].sort().join('---');
+        return state.interactions[type][key] || 0;
     }
 
- function drawMatches() {
-    const activePlayers = state.players.filter(p => p.active);
-    const courts = [
-        parseInt(document.getElementById('c1').value),
-        parseInt(document.getElementById('c2').value),
-        parseInt(document.getElementById('c3').value)
-    ];
-
-    // Berechnung: Wie viele Spieler werden insgesamt für die Plätze benötigt?
-    const totalNeeded = courts.reduce((a, b) => a + b, 0);
-
-    if (activePlayers.length < 2) {
-        alert("Nicht genügend aktive Spieler!");
-        return;
+    function setInter(type, p1, p2) {
+        const key = [p1, p2].sort().join('---');
+        state.interactions[type][key] = (state.interactions[type][key] || 0) + 1;
     }
 
-    // --- FAIRNESS LOGIK ---
-    // Wir sortieren so, dass Leute mit VIELEN Pausen oben stehen (Priorität für das Spiel).
-    // Leute mit WENIGEN Pausen landen unten im Pool und müssen eher pausieren.
-    let pool = [...activePlayers].sort((a, b) => {
-        // Sortierung absteigend nach Pausen
-        if (b.pauses !== a.pauses) {
-            return b.pauses - a.pauses; 
-        }
-        // Bei gleicher Pausenzahl entscheidet der Zufall
-        return Math.random() - 0.5;
-    });
+    function drawMatches() {
+        const activePlayers = state.players.filter(p => p.active);
+        const courts = [
+            parseInt(document.getElementById('c1').value),
+            parseInt(document.getElementById('c2').value),
+            parseInt(document.getElementById('c3').value)
+        ];
 
-    let matches = [];
-    
-    // Wir füllen die Plätze nacheinander mit den Spielern, die am längsten nicht pausiert haben
-    courts.forEach((size, index) => {
-        if (size > 0 && pool.length >= size) {
-            const team = pool.splice(0, size);
-            
-            if (size === 4) {
-                matches.push({ type: 'Doppel', court: index + 1, p: team.map(t => t.name) });
-            } else if (size === 2) {
-                matches.push({ type: 'Einzel', court: index + 1, p: team.map(t => t.name) });
+        if (activePlayers.length < 2) return;
+
+        // Fairness: Wer am meisten Pausen hat, spielt zuerst (Absteigend sortiert)
+        let pool = [...activePlayers].sort((a, b) => (b.pauses - a.pauses) || (Math.random() - 0.5));
+        
+        const totalNeeded = courts.reduce((a, b) => a + b, 0);
+        let playersForRound = pool.slice(0, totalNeeded);
+        let remaining = pool.slice(totalNeeded);
+
+        let matches = [];
+        let available = [...playersForRound];
+
+        courts.forEach((size, index) => {
+            if (size > 0 && available.length >= size) {
+                let team = [];
+                if (size === 4) {
+                    let t = available.splice(0, 4);
+                    // Einfache Optimierung: Partner wählen, die am wenigsten zusammen spielten
+                    const s1 = getInter('with', t[0].name, t[1].name) + getInter('with', t[2].name, t[3].name);
+                    const s2 = getInter('with', t[0].name, t[2].name) + getInter('with', t[1].name, t[3].name);
+                    const s3 = getInter('with', t[0].name, t[3].name) + getInter('with', t[1].name, t[2].name);
+                    
+                    if(s1 <= s2 && s1 <= s3) team = [t[0].name, t[1].name, t[2].name, t[3].name];
+                    else if(s2 <= s1 && s2 <= s3) team = [t[0].name, t[2].name, t[1].name, t[3].name];
+                    else team = [t[0].name, t[3].name, t[1].name, t[2].name];
+                    
+                    matches.push({ type: 'Doppel', court: index + 1, p: team });
+                } else if (size === 2) {
+                    let t = available.splice(0, 2);
+                    matches.push({ type: 'Einzel', court: index + 1, p: [t[0].name, t[1].name] });
+                }
             }
-        }
-    });
+        });
 
-    // Die Übriggebliebenen im Pool sind die, die pausieren müssen.
-    // Da wir oben die mit den meisten Pausen zuerst rausgepickt haben,
-    // bleiben hier die mit den wenigsten Pausen übrig.
-    const pausePlayers = pool.map(p => ({ name: p.name, total: p.pauses + 1 }));
-
-    state.currentDraft = { matches, pauses: pausePlayers };
-    showPreview(state.currentDraft);
-}
+        state.currentDraft = { matches, pauses: remaining.map(p => ({ name: p.name, total: p.pauses + 1 })) };
+        showPreview(state.currentDraft);
+    }
 
     function showPreview(draft) {
         const area = document.getElementById('previewArea');
@@ -239,37 +245,42 @@
         display.innerHTML = draft.matches.map(m => `
             <div class="match-display">
                 <strong>Platz ${m.court} (${m.type}):</strong><br>
-                ${m.type === 'Doppel' ? `${m.p[0]} / ${m.p[1]} vs. ${m.p[2]} / ${m.p[3]}` : `${m.p[0]} vs. ${m.p[1]}`}
+                ${m.type === 'Doppel' ? `${m.p[0]} & ${m.p[1]} <span style="color:var(--primary)">vs.</span> ${m.p[2]} & ${m.p[3]}` : `${m.p[0]} <span style="color:var(--primary)">vs.</span> ${m.p[1]}`}
             </div>
         `).join('');
 
         if (draft.pauses.length > 0) {
-            display.innerHTML += `<div class="pause-display">Pause: ${draft.pauses.map(p => `${p.name} (${p.total})`).join(', ')}</div>`;
+            display.innerHTML += `<div class="pause-display">Pause: ${draft.pauses.map(p => p.name).join(', ')}</div>`;
         }
     }
 
     function acceptDraw() {
         if (!state.currentDraft) return;
-
         const date = document.getElementById('docDate').value;
-        
-        // Pausen-Zähler im Haupt-State erhöhen
+
+        // Pausen-Zähler
         state.currentDraft.pauses.forEach(pp => {
-            const player = state.players.find(p => p.name === pp.name);
-            if (player) player.pauses++;
+            const p = state.players.find(sp => sp.name === pp.name);
+            if (p) p.pauses++;
         });
 
-        // In Historie speichern
+        // Interaktionen tracken
+        state.currentDraft.matches.forEach(m => {
+            if (m.type === 'Doppel') {
+                setInter('with', m.p[0], m.p[1]); setInter('with', m.p[2], m.p[3]);
+                setInter('against', m.p[0], m.p[2]); setInter('against', m.p[0], m.p[3]);
+                setInter('against', m.p[1], m.p[2]); setInter('against', m.p[1], m.p[3]);
+            } else {
+                setInter('against', m.p[0], m.p[1]);
+            }
+        });
+
         let dayEntry = state.history.find(h => h.date === date);
         if (!dayEntry) {
             dayEntry = { date: date, rounds: [] };
             state.history.push(dayEntry);
         }
-
-        dayEntry.rounds.push({
-            matches: state.currentDraft.matches,
-            pauses: state.currentDraft.pauses
-        });
+        dayEntry.rounds.push({ matches: state.currentDraft.matches, pauses: state.currentDraft.pauses });
 
         state.currentDraft = null;
         document.getElementById('previewArea').classList.add('hidden');
@@ -285,7 +296,7 @@
 
         const dayEntry = state.history.find(h => h.date === date);
         if (!dayEntry || dayEntry.rounds.length === 0) {
-            list.innerHTML = '<p style="color:#64748b">Noch keine Runden für heute.</p>';
+            list.innerHTML = '<p style="color:#64748b">Noch keine Runden heute.</p>';
             return;
         }
 
@@ -293,22 +304,25 @@
             const div = document.createElement('div');
             div.className = 'history-entry';
             const roundNum = dayEntry.rounds.length - i;
-            
             let html = `<span class="history-round">Runde ${roundNum}</span>`;
             r.matches.forEach(m => {
                 html += `<div>Pl. ${m.court}: ${m.type === 'Doppel' ? `${m.p[0]}/${m.p[1]} vs ${m.p[2]}/${m.p[3]}` : `${m.p[0]} vs ${m.p[1]}`}</div>`;
             });
-            if(r.pauses.length > 0) {
-                html += `<div style="color:#64748b">Pause: ${r.pauses.map(p => `${p.name}(${p.total})`).join(', ')}</div>`;
-            }
             div.innerHTML = html;
             list.appendChild(div);
         });
     }
 
-    // Datum-Wechsel Update
-    document.getElementById('docDate').onchange = renderHistory;
+    function resetStats() {
+        if(confirm('Möchtest du alle Pausen-Zähler und die Historie löschen? Die Spielernamen bleiben erhalten.')) {
+            state.history = [];
+            state.interactions = { with: {}, against: {} };
+            state.players.forEach(p => p.pauses = 0);
+            save();
+            renderPlayers();
+            renderHistory();
+        }
+    }
 </script>
-
 </body>
 </html>
