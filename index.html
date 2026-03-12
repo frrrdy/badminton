@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Badminton Auslosung Pro</title>
+    <title>Badminton Auslosung</title>
     <style>
         :root {
             --primary: #2563eb;
-            --bg-overlay: rgba(0, 0, 0, 0.5);
-            --card: rgba(255, 255, 255, 0.95);
-            --text: #1e293b;
-            --border: #e2e8f0;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --inactive: #94a3b8;
+            /* Weniger abdunkeln, dafür Glass-Effekt nutzen */
+            --bg-overlay: rgba(0, 0, 0, 0.3); 
+            /* Transparentere Karten mit Blur-Effekt */
+            --card: rgba(255, 255, 255, 0.75);
+            --text: #0f172a;
+            --border: rgba(255, 255, 255, 0.3);
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #ea580c;
+            --inactive: #64748b;
         }
 
         * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -33,13 +35,17 @@
         
         .card { 
             background: var(--card); 
-            border-radius: 16px; 
+            /* Glassmorphism Effekt */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px; 
             padding: 18px; 
             margin-bottom: 20px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            border: 1px solid var(--border);
         }
 
-        h2, h3 { margin-top: 0; color: #0f172a; }
+        h2, h3 { margin-top: 0; color: #000; font-weight: 800; }
 
         .player-grid {
             display: grid;
@@ -56,44 +62,56 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s ease;
-            border: 2px solid transparent;
+            border: 1px solid rgba(0,0,0,0.05);
             display: flex;
             flex-direction: column;
             min-height: 80px;
             justify-content: center;
             user-select: none;
+            background: rgba(255,255,255,0.5);
         }
 
-        .player-tile.active { background-color: #dbeafe; border-color: var(--primary); color: var(--primary); }
-        .player-tile.inactive { background-color: #f1f5f9; color: var(--inactive); border-color: #e2e8f0; }
-        .player-tile.must-pause { background-color: #ffedd5; border-color: var(--warning); color: var(--warning); }
+        .player-tile.active { background-color: rgba(37, 99, 235, 0.2); border-color: var(--primary); color: var(--primary); }
+        .player-tile.inactive { background-color: rgba(0,0,0,0.05); color: var(--inactive); border-color: transparent; }
+        .player-tile.must-pause { background-color: rgba(234, 88, 12, 0.2); border-color: var(--warning); color: var(--warning); }
 
-        .player-tile .pause-count { font-size: 11px; margin-top: 4px; opacity: 0.8; }
+        .player-tile .pause-count { font-size: 11px; margin-top: 4px; opacity: 0.9; }
         
         @keyframes shuffle {
             0% { transform: scale(1); }
-            50% { transform: scale(0.95); opacity: 0.7; }
+            50% { transform: scale(0.96); opacity: 0.8; }
             100% { transform: scale(1); }
         }
         .shuffling { animation: shuffle 0.2s ease-in-out 3; }
 
         .flex-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
-        input[type="text"], select { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 16px; background: white; }
         
-        button { padding: 12px 20px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-primary { background: var(--primary); color: white; width: 100%; font-size: 18px; margin-top: 10px; }
-        .btn-add { background: var(--text); color: white; }
+        input[type="text"], select { 
+            flex: 1; 
+            padding: 12px; 
+            border: 1px solid rgba(0,0,0,0.1); 
+            border-radius: 12px; 
+            font-size: 16px; 
+            background: rgba(255,255,255,0.8);
+        }
+        
+        button { padding: 12px 20px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: white; width: 100%; font-size: 18px; margin-top: 10px; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+        .btn-add { background: #000; color: white; }
         .btn-accept { background: var(--success); color: white; flex: 1; }
-        .btn-reject { background: var(--inactive); color: white; flex: 1; }
+        .btn-reject { background: #64748b; color: white; flex: 1; }
 
         .match-display { 
-            background: #fff; padding: 12px; border-radius: 12px; margin-bottom: 8px; 
-            border-left: 6px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            background: rgba(255,255,255,0.6); 
+            padding: 12px; 
+            border-radius: 12px; 
+            margin-bottom: 8px; 
+            border-left: 6px solid var(--primary);
             font-size: 14px;
         }
         
-        .pause-box { background: #fef2f2; color: var(--danger); padding: 12px; border-radius: 10px; margin-top: 15px; font-weight: bold; }
-        .history-entry { background: #f8fafc; border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid #e2e8f0; font-size: 13px; }
+        .pause-box { background: rgba(220, 38, 38, 0.15); color: #991b1b; padding: 12px; border-radius: 12px; margin-top: 15px; font-weight: bold; }
+        .history-entry { background: rgba(255,255,255,0.4); border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.05); font-size: 13px; }
         
         .hidden { display: none; }
     </style>
@@ -101,11 +119,11 @@
 <body>
 
 <div class="container">
-    <h2 style="color: white; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-bottom: 25px;">🏸 Badminton Auslosung</h2>
+    <h2 style="color: white; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.6); margin-bottom: 25px; letter-spacing: 1px;">BADMINTON</h2>
 
     <div class="card">
         <h3>Spieler (<span id="activeCount">0</span>)</h3>
-        <p style="font-size: 11px; margin-top: -10px; color: #64748b;">Tippen: Status (Aktiv ➜ Pause ➜ Aus) wechseln</p>
+        <p style="font-size: 11px; margin-top: -10px; color: #475569;">Tippen: Status (Aktiv ➜ Pause ➜ Aus) wechseln</p>
         <div class="flex-row">
             <input type="text" id="playerName" placeholder="Name...">
             <button class="btn-add" id="btnAddPlayer">Add</button>
@@ -134,16 +152,17 @@
     <div class="card">
         <div class="flex-row"><h3 style="margin:0; flex:1;">Historie</h3><input type="date" id="docDate" style="max-width: 140px;"></div>
         <div id="historyList"></div>
-        <button onclick="fullReset()" style="background:none; color:var(--danger); border:1px solid var(--danger); width:100%; margin-top:20px; padding:8px; border-radius:8px; font-size:11px;">Alles zurücksetzen</button>
+        <button onclick="fullReset()" style="background:none; color:var(--danger); border:1px solid rgba(220,38,38,0.3); width:100%; margin-top:20px; padding:8px; border-radius:12px; font-size:11px;">Alles zurücksetzen</button>
     </div>
 </div>
 
 <script>
+    // LOGIK BLEIBT IDENTISCH ZU V8
     const CORE_PLAYERS = ["Bastian", "Florian", "Lars", "Ferdinand", "Lukas", "Charlotte", "Klaus", "Simon"];
     let state = { players: [], history: [], currentDraft: null, interactions: {} };
 
     document.addEventListener('DOMContentLoaded', () => {
-        const saved = localStorage.getItem('badmintonState_v8');
+        const saved = localStorage.getItem('badmintonState_v9');
         if (saved) state = JSON.parse(saved);
         else resetToDefaults();
         
@@ -158,7 +177,7 @@
         document.getElementById('docDate').onchange = renderHistory;
     });
 
-    function save() { localStorage.setItem('badmintonState_v8', JSON.stringify(state)); }
+    function save() { localStorage.setItem('badmintonState_v9', JSON.stringify(state)); }
 
     function resetToDefaults() {
         state.players = CORE_PLAYERS.map(name => ({ name, active: true, mustPause: false, pauses: 0, isCore: true }));
@@ -181,15 +200,9 @@
 
     function cycleStatus(index) {
         const p = state.players[index];
-        if (p.active && !p.mustPause) {
-            p.mustPause = true;
-        } else if (p.mustPause) {
-            p.mustPause = false;
-            p.active = false;
-        } else {
-            p.active = true;
-            p.mustPause = false;
-        }
+        if (p.active && !p.mustPause) { p.mustPause = true; } 
+        else if (p.mustPause) { p.mustPause = false; p.active = false; } 
+        else { p.active = true; p.mustPause = false; }
         renderPlayers();
         save();
     }
@@ -207,13 +220,11 @@
         const grid = document.getElementById('playerGrid');
         grid.innerHTML = '';
         let activeCounter = 0;
-
         state.players.forEach((p, i) => {
             if(p.active && !p.mustPause) activeCounter++;
             const div = document.createElement('div');
             let statusClass = p.active ? 'active' : 'inactive';
             if (p.mustPause) statusClass = 'must-pause';
-            
             div.className = `player-tile ${statusClass}`;
             div.onclick = () => cycleStatus(i);
             div.innerHTML = `
@@ -248,24 +259,18 @@
             parseInt(document.getElementById('c3').value)
         ];
         const totalNeeded = courts.reduce((a, b) => a + b, 0);
-
         if (poolAvailable.length < totalNeeded) {
             alert(`Zu wenig Spieler! Benötigt: ${totalNeeded}, Verfügbar: ${poolAvailable.length}.`);
             return;
         }
-
         let sorted = [...poolAvailable].sort((a, b) => (b.pauses - a.pauses) || (Math.random() - 0.5));
         let selected = sorted.slice(0, totalNeeded);
-        
-        // WICHTIG: Hier fassen wir geloste Pausen UND erzwungene Pausen zusammen
         let pausingNames = [
             ...sorted.slice(totalNeeded).map(p => p.name), 
             ...state.players.filter(p => p.active && p.mustPause).map(p => p.name)
         ];
-
         let matches = [];
         let left = [...selected];
-
         courts.forEach((size, idx) => {
             if (size === 0) return;
             let team = [];
@@ -276,12 +281,9 @@
                 let p3 = left.shift();
                 let p4 = left.shift();
                 team = [p1.name, p2.name, p3.name, p4.name];
-            } else {
-                team = left.splice(0, size).map(p => p.name);
-            }
+            } else { team = left.splice(0, size).map(p => p.name); }
             matches.push({ type: size === 4 ? 'Doppel' : 'Einzel', court: idx + 1, p: team });
         });
-
         state.currentDraft = { matches, pausing: pausingNames };
         showPreview();
     }
@@ -304,12 +306,10 @@
     }
 
     function acceptDraw() {
-        // Hier werden jetzt ALLE gezählt, die pausiert haben
         state.currentDraft.pausing.forEach(name => {
             const p = state.players.find(sp => sp.name === name);
             if (p) p.pauses++;
         });
-
         state.currentDraft.matches.forEach(m => {
             if (m.type === 'Doppel') {
                 const k1 = [m.p[0], m.p[1]].sort().join('|');
@@ -318,14 +318,11 @@
                 state.interactions[k2] = (state.interactions[k2] || 0) + 1;
             }
         });
-
         state.players.forEach(p => p.mustPause = false);
-
         const date = document.getElementById('docDate').value;
         let day = state.history.find(h => h.date === date);
         if (!day) { day = { date, rounds: [] }; state.history.push(day); }
         day.rounds.push(state.currentDraft);
-
         state.currentDraft = null;
         document.getElementById('previewArea').classList.add('hidden');
         renderPlayers();
@@ -337,24 +334,22 @@
         const date = document.getElementById('docDate').value;
         const list = document.getElementById('historyList');
         const day = state.history.find(h => h.date === date);
-        
         if (!day || !day.rounds.length) {
-            list.innerHTML = '<p style="color:gray;text-align:center">Noch keine Runden.</p>';
+            list.innerHTML = '<p style="color:#475569;text-align:center">Noch keine Runden.</p>';
             return;
         }
-
         list.innerHTML = [...day.rounds].reverse().map((r, i) => `
             <div class="history-entry">
                 <b style="color:var(--primary)">Runde ${day.rounds.length - i}</b><br>
                 ${r.matches.map(m => `Pl. ${m.court}: ${formatMatch(m)}`).join('<br>')}
-                ${r.pausing.length ? `<div style="color:red; font-size:11px; margin-top:4px;">Pause: ${r.pausing.join(', ')}</div>` : ''}
+                ${r.pausing.length ? `<div style="color:#b91c1c; font-size:11px; margin-top:4px;">Pause: ${r.pausing.join(', ')}</div>` : ''}
             </div>
         `).join('');
     }
 
     function fullReset() {
         if(confirm('Wirklich alle Daten löschen?')) {
-            localStorage.removeItem('badmintonState_v8');
+            localStorage.removeItem('badmintonState_v9');
             location.reload();
         }
     }
