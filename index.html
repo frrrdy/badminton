@@ -1,358 +1,882 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Badminton Auslosung</title>
-    <style>
-        :root {
-            --primary: #2563eb;
-            /* Weniger abdunkeln, dafür Glass-Effekt nutzen */
-            --bg-overlay: rgba(0, 0, 0, 0.3); 
-            /* Transparentere Karten mit Blur-Effekt */
-            --card: rgba(255, 255, 255, 0.75);
-            --text: #0f172a;
-            --border: rgba(255, 255, 255, 0.3);
-            --success: #16a34a;
-            --danger: #dc2626;
-            --warning: #ea580c;
-            --inactive: #64748b;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Badminton</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap');
 
-        * { box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        body { 
-            background: linear-gradient(var(--bg-overlay), var(--bg-overlay)), 
-                        url('IMG_2648.jpg') no-repeat center center fixed; 
-            background-size: cover;
-            color: var(--text); 
-            margin: 0; 
-            padding: 15px; 
-            padding-bottom: 40px; 
-        }
+:root {
+  --bg:       #0a0a0f;
+  --surface:  #13131a;
+  --surface2: #1c1c27;
+  --border:   #2a2a3a;
+  --accent:   #c8ff00;
+  --accent2:  #ff6b35;
+  --text:     #e8e8f0;
+  --muted:    #6a6a8a;
+  --danger:   #ff4444;
+  --pause-c:  #ff9500;
+  --ok:       #00e676;
+  --radius:   14px;
+  --mono:     'DM Mono', monospace;
+  --display:  'Syne', sans-serif;
+}
 
-        .container { max-width: 600px; margin: 0 auto; }
-        
-        .card { 
-            background: var(--card); 
-            /* Glassmorphism Effekt */
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 20px; 
-            padding: 18px; 
-            margin-bottom: 20px; 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-            border: 1px solid var(--border);
-        }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  min-height: 100vh;
+  padding: 14px 13px 70px;
+  max-width: 560px;
+  margin: 0 auto;
+}
 
-        h2, h3 { margin-top: 0; color: #000; font-weight: 800; }
+/* ── HEADER ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; padding: 0 2px;
+}
+.logo { font-family: var(--display); font-size: 24px; font-weight: 800; letter-spacing: -1px; color: var(--accent); }
+.logo span { color: var(--text); opacity: 0.5; }
+.date-pill {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 12px;
+  font-size: 11px; color: var(--text);
+}
+.date-pill input[type=date] {
+  background: none; border: none; color: var(--text);
+  font-family: var(--mono); font-size: 11px; outline: none; cursor: pointer;
+}
 
-        .player-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 10px;
-            margin-top: 15px;
-        }
+/* ── COLLAPSIBLE CARD ── */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 10px; overflow: hidden;
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; cursor: pointer; user-select: none;
+}
+.card-header-left { display: flex; align-items: center; gap: 10px; }
+.card-title {
+  font-family: var(--display); font-size: 14px; font-weight: 700;
+  color: var(--text); letter-spacing: 0.5px;
+}
+.card-badge {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 2px 9px; font-size: 10px; color: var(--muted);
+}
+.card-chevron { color: var(--muted); font-size: 12px; transition: transform 0.2s; }
+.card.open .card-chevron { transform: rotate(180deg); }
+.card-body { padding: 0 16px 16px; display: none; }
+.card.open .card-body { display: block; }
+.card.always-open .card-body { display: block; }
+.card.always-open .card-header { cursor: default; }
 
-        .player-tile {
-            position: relative;
-            padding: 12px 8px;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            min-height: 80px;
-            justify-content: center;
-            user-select: none;
-            background: rgba(255,255,255,0.5);
-        }
+/* ── PLAYERS ── */
+.player-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 7px;
+  margin-bottom: 10px;
+}
+.player-tile {
+  position: relative; padding: 10px 6px 8px; border-radius: 10px;
+  text-align: center; cursor: pointer; transition: all 0.12s;
+  border: 1.5px solid transparent; user-select: none; background: var(--surface2);
+}
+.player-tile .p-name { font-size: 12px; font-weight: 500; display: block; color: var(--text); }
+.player-tile .p-stats { font-size: 9px; color: var(--muted); margin-top: 3px; display: block; }
+.player-tile.active   { border-color: var(--accent); background: rgba(200,255,0,0.07); }
+.player-tile.active .p-name { color: var(--accent); }
+.player-tile.pausing  { border-color: var(--pause-c); background: rgba(255,149,0,0.08); }
+.player-tile.pausing .p-name { color: var(--pause-c); }
+.player-tile.inactive .p-name { color: var(--muted); }
+.player-tile .remove-btn {
+  position: absolute; top: 3px; right: 4px; background: none; border: none;
+  color: var(--muted); font-size: 12px; cursor: pointer; padding: 0; line-height: 1; opacity: 0.3;
+}
+.player-tile:hover .remove-btn { opacity: 0.7; }
+.tile-hint { font-size: 10px; color: var(--muted); margin-top: 6px; }
 
-        .player-tile.active { background-color: rgba(37, 99, 235, 0.2); border-color: var(--primary); color: var(--primary); }
-        .player-tile.inactive { background-color: rgba(0,0,0,0.05); color: var(--inactive); border-color: transparent; }
-        .player-tile.must-pause { background-color: rgba(234, 88, 12, 0.2); border-color: var(--warning); color: var(--warning); }
+.add-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.add-row input {
+  flex: 1; padding: 10px 12px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); font-family: var(--mono); font-size: 14px; outline: none;
+}
+.add-row input::placeholder { color: var(--muted); }
 
-        .player-tile .pause-count { font-size: 11px; margin-top: 4px; opacity: 0.9; }
-        
-        @keyframes shuffle {
-            0% { transform: scale(1); }
-            50% { transform: scale(0.96); opacity: 0.8; }
-            100% { transform: scale(1); }
-        }
-        .shuffling { animation: shuffle 0.2s ease-in-out 3; }
+/* ── COURTS ── */
+.court-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.court-label { font-size: 12px; color: var(--muted); min-width: 52px; }
+.toggle-group { display: flex; gap: 4px; }
+.toggle-btn {
+  padding: 6px 11px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--muted);
+  font-family: var(--mono); font-size: 11px; cursor: pointer; transition: all 0.12s;
+}
+.toggle-btn.selected { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
 
-        .flex-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
-        
-        input[type="text"], select { 
-            flex: 1; 
-            padding: 12px; 
-            border: 1px solid rgba(0,0,0,0.1); 
-            border-radius: 12px; 
-            font-size: 16px; 
-            background: rgba(255,255,255,0.8);
-        }
-        
-        button { padding: 12px 20px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
-        .btn-primary { background: var(--primary); color: white; width: 100%; font-size: 18px; margin-top: 10px; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
-        .btn-add { background: #000; color: white; }
-        .btn-accept { background: var(--success); color: white; flex: 1; }
-        .btn-reject { background: #64748b; color: white; flex: 1; }
+.score-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 12px; color: var(--muted); }
+.switch { position: relative; width: 38px; height: 21px; display: inline-block; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; inset: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 21px; cursor: pointer; transition: .2s; }
+.slider:before { content:''; position:absolute; width:15px; height:15px; left:2px; top:2px; background:var(--muted); border-radius:50%; transition:.2s; }
+input:checked + .slider { background: var(--accent); border-color: var(--accent); }
+input:checked + .slider:before { transform: translateX(17px); background: #000; }
 
-        .match-display { 
-            background: rgba(255,255,255,0.6); 
-            padding: 12px; 
-            border-radius: 12px; 
-            margin-bottom: 8px; 
-            border-left: 6px solid var(--primary);
-            font-size: 14px;
-        }
-        
-        .pause-box { background: rgba(220, 38, 38, 0.15); color: #991b1b; padding: 12px; border-radius: 12px; margin-top: 15px; font-weight: bold; }
-        .history-entry { background: rgba(255,255,255,0.4); border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.05); font-size: 13px; }
-        
-        .hidden { display: none; }
-    </style>
+/* ── DRAW BUTTON ── */
+.btn-draw {
+  width: 100%; padding: 15px; background: var(--accent); color: #000;
+  border: none; border-radius: var(--radius); font-family: var(--display);
+  font-size: 17px; font-weight: 800; letter-spacing: 1px; cursor: pointer;
+  transition: transform 0.1s, opacity 0.1s; margin-top: 2px; margin-bottom: 10px;
+}
+.btn-draw:active { transform: scale(0.97); opacity: 0.85; }
+
+/* ── ACTIVE ROUND ── */
+.active-round { display: none; }
+.active-round.visible { display: block; }
+
+.match-block {
+  background: var(--surface2); border-radius: 10px; padding: 12px 14px;
+  margin-bottom: 8px; border-left: 3px solid var(--accent);
+}
+.match-type-tag { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+.teams { font-size: 14px; line-height: 1.6; }
+.team-a { color: var(--text); }
+.vs-sep { color: var(--muted); margin: 0 6px; font-size: 11px; }
+.team-b { color: var(--text); }
+
+.pause-tag {
+  background: rgba(255,149,0,0.1); border: 1px solid var(--pause-c);
+  border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--pause-c); margin-bottom: 8px;
+}
+
+.winner-section { margin-top: 10px; }
+.winner-label { font-size: 10px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+.winner-btns { display: flex; gap: 6px; }
+.w-btn {
+  flex: 1; padding: 8px 6px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--muted); font-family: var(--mono);
+  font-size: 11px; cursor: pointer; text-align: center; transition: all 0.15s; line-height: 1.3;
+}
+.w-btn.selected-a { border-color: var(--ok); color: var(--ok); background: rgba(0,230,118,0.1); }
+.w-btn.selected-b { border-color: var(--accent2); color: var(--accent2); background: rgba(255,107,53,0.1); }
+
+.phase-row { display: flex; gap: 8px; margin-top: 14px; }
+.btn-primary { flex: 2; padding: 13px; background: var(--accent); color: #000; border: none; border-radius: 10px; font-family: var(--display); font-weight: 800; font-size: 15px; cursor: pointer; }
+.btn-secondary { flex: 1; padding: 13px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); border-radius: 10px; font-family: var(--mono); font-size: 13px; cursor: pointer; }
+.btn-full { width: 100%; padding: 13px; background: var(--accent); color: #000; border: none; border-radius: 10px; font-family: var(--display); font-weight: 800; font-size: 15px; cursor: pointer; margin-top: 12px; }
+
+/* ── MANUAL ── */
+.man-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+.man-section { margin-bottom: 14px; }
+.man-player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; }
+.man-tile {
+  padding: 8px 6px; border-radius: 8px; border: 1.5px solid var(--border);
+  background: var(--surface2); color: var(--muted); font-size: 12px;
+  text-align: center; cursor: pointer; transition: all 0.12s; user-select: none; position: relative;
+}
+.man-tile.sel-a { border-color: var(--accent); color: var(--accent); background: rgba(200,255,0,0.08); }
+.man-tile.sel-b { border-color: var(--accent2); color: var(--accent2); background: rgba(255,107,53,0.08); }
+.man-tile .pause-dot { position:absolute; top:3px; right:4px; width:6px; height:6px; border-radius:50%; background:var(--pause-c); }
+.man-tile.pausing-hint { opacity: 0.55; }
+.man-legend { display: flex; gap: 12px; margin-bottom: 8px; font-size: 10px; color: var(--muted); }
+.man-legend span { display: flex; align-items: center; gap: 4px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot-a { background: var(--accent); }
+.dot-b { background: var(--accent2); }
+
+/* ── HISTORY ── */
+.history-round {
+  background: var(--surface2); border-radius: 10px; padding: 11px 13px;
+  margin-bottom: 7px; border-left: 3px solid var(--border);
+}
+.rnd-header { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+.rnd-match { font-size: 12px; margin-bottom: 2px; line-height: 1.5; color: var(--text); }
+.rnd-pause { font-size: 11px; color: var(--pause-c); margin-top: 4px; }
+.winner-tag { color: var(--ok); font-size: 10px; margin-left: 5px; }
+.delete-btn { background: none; border: none; color: var(--border); cursor: pointer; font-size: 14px; padding: 0; transition: color 0.15s; }
+.delete-btn:hover { color: var(--muted); }
+.history-actions { display: flex; gap: 8px; margin-top: 10px; }
+
+/* ── STATS ── */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.stat-item { background: var(--surface2); border-radius: 8px; padding: 10px 12px; }
+.stat-name { font-size: 12px; color: var(--text); margin-bottom: 3px; }
+.stat-val { font-size: 10px; color: var(--muted); line-height: 1.7; }
+
+/* ── UTILITY ── */
+.btn-sm { padding: 9px 14px; border-radius: 9px; border: none; font-family: var(--mono); font-weight: 500; cursor: pointer; font-size: 12px; }
+.btn-accent { background: var(--accent); color: #000; }
+.btn-ghost { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+.footer-reset { width: 100%; padding: 9px; background: none; border: 1px solid rgba(255,68,68,0.2); border-radius: 10px; color: rgba(255,68,68,0.45); font-family: var(--mono); font-size: 11px; cursor: pointer; margin-top: 14px; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+.hidden { display: none !important; }
+
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #000; padding: 9px 20px; border-radius: 20px; font-family: var(--display); font-weight: 700; font-size: 13px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; white-space: nowrap; }
+.toast.show { opacity: 1; }
+</style>
 </head>
 <body>
 
-<div class="container">
-    <h2 style="color: white; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.6); margin-bottom: 25px; letter-spacing: 1px;">BADMINTON</h2>
-
-    <div class="card">
-        <h3>Spieler (<span id="activeCount">0</span>)</h3>
-        <p style="font-size: 11px; margin-top: -10px; color: #475569;">Tippen: Status (Aktiv ➜ Pause ➜ Aus) wechseln</p>
-        <div class="flex-row">
-            <input type="text" id="playerName" placeholder="Name...">
-            <button class="btn-add" id="btnAddPlayer">Add</button>
-        </div>
-        <div id="playerGrid" class="player-grid"></div>
-    </div>
-
-    <div class="card">
-        <h3>Plätze</h3>
-        <div class="flex-row"><span>Platz 1</span><select id="c1"><option value="4">Doppel (4)</option><option value="2">Einzel (2)</option><option value="0">Aus</option></select></div>
-        <div class="flex-row"><span>Platz 2</span><select id="c2"><option value="4">Doppel (4)</option><option value="2">Einzel (2)</option><option value="0">Aus</option></select></div>
-        <div class="flex-row"><span>Platz 3</span><select id="c3"><option value="0">Aus</option><option value="4">Doppel (4)</option><option value="2">Einzel (2)</option></select></div>
-        <button class="btn-primary" id="btnDraw">Runde auslosen 🎲</button>
-    </div>
-
-    <div id="previewArea" class="card hidden">
-        <h3 style="color: var(--primary)">Vorschau</h3>
-        <div id="matchPreview"></div>
-        <div id="pausePreview" class="pause-box"></div>
-        <div class="flex-row" style="margin-top:20px;">
-            <button class="btn-reject" id="btnReject">Neu losen</button>
-            <button class="btn-accept" id="btnAccept">Bestätigen</button>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="flex-row"><h3 style="margin:0; flex:1;">Historie</h3><input type="date" id="docDate" style="max-width: 140px;"></div>
-        <div id="historyList"></div>
-        <button onclick="fullReset()" style="background:none; color:var(--danger); border:1px solid rgba(220,38,38,0.3); width:100%; margin-top:20px; padding:8px; border-radius:12px; font-size:11px;">Alles zurücksetzen</button>
-    </div>
+<div class="header">
+  <div class="logo">BADMINTON<span>.</span></div>
+  <div class="date-pill"><input type="date" id="docDate"></div>
 </div>
 
+<!-- ACTIVE ROUND -->
+<div class="active-round" id="activeRoundSection">
+  <div class="card always-open" style="border-color: rgba(200,255,0,0.3);">
+    <div class="card-header" style="cursor:default;">
+      <div class="card-header-left">
+        <div class="card-title" style="color:var(--accent);">Aktuelle Runde</div>
+        <div class="card-badge" id="roundBadge">Vorschau</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div id="activePause"></div>
+      <div id="activeMatches"></div>
+      <div id="phaseA" class="phase-row">
+        <button class="btn-secondary" id="btnRedraw">↺ Neu losen</button>
+        <button class="btn-primary"   id="btnConfirm">✓ Bestätigen</button>
+      </div>
+      <div id="phaseB" class="hidden">
+        <hr class="divider">
+        <div id="winnerSelections"></div>
+        <button class="btn-full" id="btnNextRound">→ Nächste Runde</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DRAW -->
+<div id="drawSection">
+  <button class="btn-draw" id="btnDraw">⬡ RUNDE AUSLOSEN</button>
+</div>
+
+<!-- PLAYERS (collapsible) -->
+<div class="card" id="cardPlayers">
+  <div class="card-header" onclick="toggleCard('cardPlayers')">
+    <div class="card-header-left">
+      <div class="card-title">Spieler</div>
+      <div class="card-badge" id="activeCount">0 aktiv</div>
+    </div>
+    <div class="card-chevron">▾</div>
+  </div>
+  <div class="card-body">
+    <div class="add-row">
+      <input type="text" id="playerName" placeholder="Name hinzufügen…" autocomplete="off" autocorrect="off">
+      <button class="btn-sm btn-accent" id="btnAdd">+</button>
+    </div>
+    <div class="player-grid" id="playerGrid"></div>
+    <p class="tile-hint">Tippen: Aktiv → Pflichtpause → Inaktiv</p>
+  </div>
+</div>
+
+<!-- COURTS (collapsible) -->
+<div class="card" id="cardCourts">
+  <div class="card-header" onclick="toggleCard('cardCourts')">
+    <div class="card-header-left">
+      <div class="card-title">Plätze & Einstellungen</div>
+    </div>
+    <div class="card-chevron">▾</div>
+  </div>
+  <div class="card-body">
+    <div id="courtRows"></div>
+    <div class="score-row">
+      <label class="switch"><input type="checkbox" id="scoreToggle"><span class="slider"></span></label>
+      <span>Ergebnisse erfassen</span>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="card always-open">
+  <div class="card-header" style="cursor:default;">
+    <div class="card-header-left">
+      <div class="card-title">Verlauf</div>
+      <div class="card-badge" id="historyBadge">0 Runden</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <div id="historyList"></div>
+    <div class="history-actions">
+      <button class="btn-sm btn-ghost" id="btnManualAdd" style="flex:1;">+ Manuell nachtragen</button>
+      <button class="btn-sm btn-ghost" id="btnStats"     style="flex:1;">↗ Statistik</button>
+    </div>
+    <button class="footer-reset" id="btnReset">Alle Daten zurücksetzen</button>
+  </div>
+</div>
+
+<!-- MANUAL ENTRY -->
+<div class="card always-open hidden" id="manualCard">
+  <div class="card-header" style="cursor:default;">
+    <div class="card-header-left"><div class="card-title">Manuell nachtragen</div></div>
+  </div>
+  <div class="card-body">
+    <div class="man-section">
+      <div class="man-label">Spieltyp</div>
+      <div class="toggle-group" id="manualTypeGroup">
+        <button class="toggle-btn selected" data-val="Doppel">Doppel</button>
+        <button class="toggle-btn" data-val="Einzel">Einzel</button>
+      </div>
+    </div>
+    <div class="man-section">
+      <!-- Dynamic matchup label, always visible -->
+      <div id="manDoubleLabel" style="font-size:13px; color:var(--text); margin-bottom:10px; font-family:var(--mono); min-height:20px;">
+        Team A <span style="color:var(--muted)">vs</span> Team B
+      </div>
+      <!-- Doppel grid -->
+      <div id="manualDoubleSec">
+        <div class="man-legend">
+          <span><span class="dot dot-a"></span>Team A</span>
+          <span><span class="dot dot-b"></span>Team B</span>
+        </div>
+        <div class="man-player-grid" id="manualGrid"></div>
+        <p style="font-size:10px;color:var(--muted);margin-top:8px;">Erst 2× Team A, dann 2× Team B. ● = pausiert gerade.</p>
+      </div>
+      <!-- Einzel grid -->
+      <div class="hidden" id="manualSingleSec">
+        <div class="man-player-grid" id="manualGridSingle"></div>
+      </div>
+    </div>
+    <div class="man-section hidden" id="manualWinnerSec">
+      <div class="man-label">Gewinner</div>
+      <div class="toggle-group" id="manualWinGroup">
+        <button class="toggle-btn" data-val="A">Team A</button>
+        <button class="toggle-btn" data-val="B">Team B</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn-sm btn-ghost"  id="btnManualCancel">Abbrechen</button>
+      <button class="btn-sm btn-accent" id="btnManualSave">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="card always-open hidden" id="statsCard">
+  <div class="card-header" style="cursor:default;">
+    <div class="card-header-left"><div class="card-title">Statistik</div></div>
+  </div>
+  <div class="card-body">
+    <div class="stats-grid" id="statsGrid"></div>
+    <button class="btn-sm btn-ghost" style="width:100%;margin-top:10px;" id="btnStatsClose">Schließen</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-    // LOGIK BLEIBT IDENTISCH ZU V8
-    const CORE_PLAYERS = ["Bastian", "Florian", "Lars", "Ferdinand", "Lukas", "Charlotte", "Klaus", "Simon"];
-    let state = { players: [], history: [], currentDraft: null, interactions: {} };
+const STORAGE_KEY = 'badminton_v2';
+const CORE = ['Bastian','Florian','Lars','Ferdinand','Lukas','Charlotte','Klaus','Simon'];
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const saved = localStorage.getItem('badmintonState_v9');
-        if (saved) state = JSON.parse(saved);
-        else resetToDefaults();
-        
-        document.getElementById('docDate').valueAsDate = new Date();
-        renderPlayers();
-        renderHistory();
-        
-        document.getElementById('btnAddPlayer').onclick = addPlayer;
-        document.getElementById('btnDraw').onclick = triggerShuffle;
-        document.getElementById('btnAccept').onclick = acceptDraw;
-        document.getElementById('btnReject').onclick = triggerShuffle;
-        document.getElementById('docDate').onchange = renderHistory;
+let S = { players:[], history:[], partnerOf:{}, opponentOf:{}, scoreMode:false, draftId:0, currentDraft:null, phase:'draw' };
+const courts = [
+  { label:'Platz 1', mode:'Doppel' },
+  { label:'Platz 2', mode:'Doppel' },
+  { label:'Platz 3', mode:'Aus' },
+];
+
+// ── STORAGE ──────────────────────────────────
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ S, courts })); }
+function load() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) { initDefault(); return; }
+  try {
+    const p = JSON.parse(raw);
+    S = p.S;
+    if (p.courts) courts.forEach((c,i) => { if (p.courts[i]) c.mode = p.courts[i].mode; });
+  } catch(e) { initDefault(); return; }
+  // migrate
+  S.players.forEach(p => {
+    p.gamesPlayed = p.gamesPlayed || 0;
+    p.pauseCount  = p.pauseCount  || 0;
+    if (p.lastPlayed  === undefined) p.lastPlayed  = -1;
+    if (p.forcePause  === undefined) p.forcePause  = false;
+  });
+  S.partnerOf  = S.partnerOf  || {};
+  S.opponentOf = S.opponentOf || {};
+  S.phase      = S.phase      || 'draw';
+}
+function initDefault() {
+  S = { players: CORE.map(n=>newPlayer(n,true)), history:[], partnerOf:{}, opponentOf:{}, scoreMode:false, draftId:0, currentDraft:null, phase:'draw' };
+  save();
+}
+function newPlayer(name, isCore=false) {
+  return { name, isCore, active:true, forcePause:false, gamesPlayed:0, pauseCount:0, lastPlayed:-1 };
+}
+
+// ── CARD TOGGLE ───────────────────────────────
+function toggleCard(id) { document.getElementById(id).classList.toggle('open'); }
+
+// ── INTERACTIONS ─────────────────────────────
+function ikey(a,b) { return [a,b].sort().join('|'); }
+function getPartner(a,b)  { return S.partnerOf[ikey(a,b)]  || 0; }
+function getOpponent(a,b) { return S.opponentOf[ikey(a,b)] || 0; }
+function recordMatch(m) {
+  if (m.type === 'Doppel') {
+    const [a,b,c,d] = m.players;
+    [ikey(a,b), ikey(c,d)].forEach(k => S.partnerOf[k]  = (S.partnerOf[k] ||0)+1);
+    [[a,c],[a,d],[b,c],[b,d]].forEach(([x,y]) => { const k=ikey(x,y); S.opponentOf[k]=(S.opponentOf[k]||0)+1; });
+  } else {
+    const k = ikey(m.players[0], m.players[1]); S.opponentOf[k] = (S.opponentOf[k]||0)+1;
+  }
+}
+
+// ── DRAW ALGORITHM ───────────────────────────
+function drawMatches() {
+  const pool   = S.players.filter(p => p.active && !p.forcePause);
+  const forced = S.players.filter(p => p.active && p.forcePause).map(p => p.name);
+  const sizes  = courts.map(c => c.mode==='Doppel'?4 : c.mode==='Einzel'?2 : 0);
+  const total  = sizes.reduce((a,b)=>a+b, 0);
+
+  if (total === 0)          { toast('Keine aktiven Plätze konfiguriert.'); return null; }
+  if (pool.length < total)  { toast(`Zu wenig Spieler! Brauche ${total}, verfügbar: ${pool.length}.`); return null; }
+
+  const sorted = [...pool].sort((a,b) => {
+    if (b.pauseCount !== a.pauseCount) return b.pauseCount - a.pauseCount;
+    if (a.lastPlayed !== b.lastPlayed) return a.lastPlayed - b.lastPlayed;
+    return Math.random() - 0.5;
+  });
+
+  const playing = sorted.slice(0, total);
+  const pausing = [...sorted.slice(total).map(p=>p.name), ...forced];
+  const matches = [];
+  let left = [...playing];
+
+  courts.forEach((court, idx) => {
+    const sz = sizes[idx];
+    if (!sz) return;
+    if (sz === 2) {
+      const p1 = left.shift();
+      left.sort((a,b) => getOpponent(p1.name,a.name) - getOpponent(p1.name,b.name));
+      const p2 = left.shift();
+      matches.push({ type:'Einzel', court:idx+1, players:[p1.name,p2.name], winner:null });
+    } else {
+      const four = left.splice(0,4);
+      const best = bestSplit(four.map(p=>p.name));
+      matches.push({ type:'Doppel', court:idx+1, players:best, winner:null });
+    }
+  });
+  return { matches, pausing };
+}
+
+function bestSplit(n) {
+  const splits = [[0,1,2,3],[0,2,1,3],[0,3,1,2]];
+  let best=Infinity, bestOrder=splits[0];
+  splits.forEach(([a,b,c,d]) => {
+    const p = getPartner(n[a],n[b]) + getPartner(n[c],n[d]);
+    const o = getOpponent(n[a],n[c]) + getOpponent(n[a],n[d]) + getOpponent(n[b],n[c]) + getOpponent(n[b],n[d]);
+    const s = o*3 + p;
+    if (s < best) { best=s; bestOrder=[a,b,c,d]; }
+  });
+  return bestOrder.map(i=>n[i]);
+}
+
+// ── PHASE FLOW ───────────────────────────────
+function startDraw() {
+  const draft = drawMatches();
+  if (!draft) return;
+  S.currentDraft = draft;
+  S.phase = 'confirm';
+  save(); renderPhase();
+  document.getElementById('activeRoundSection').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function onConfirm() {
+  const d = S.currentDraft;
+  S.draftId++;
+  d.pausing.forEach(name => { const p=S.players.find(x=>x.name===name); if(p) p.pauseCount++; });
+  d.matches.forEach(m => {
+    m.players.forEach(name => { const p=S.players.find(x=>x.name===name); if(p){p.gamesPlayed++;p.lastPlayed=S.draftId;} });
+    recordMatch(m);
+  });
+  S.players.forEach(p => p.forcePause=false);
+
+  const date = document.getElementById('docDate').value;
+  let day = S.history.find(h=>h.date===date);
+  if (!day) { day={date,rounds:[]}; S.history.push(day); }
+  day.rounds.push(JSON.parse(JSON.stringify(d)));
+
+  S.phase = S.scoreMode ? 'result' : 'done';
+  if (S.phase === 'done') { finishRound(); return; }
+  save(); renderPhase(); renderHistory(); renderPlayers();
+}
+
+function onNextRound() {
+  if (S.scoreMode && S.currentDraft) {
+    const date = document.getElementById('docDate').value;
+    const day  = S.history.find(h=>h.date===date);
+    if (day && day.rounds.length) {
+      const last = day.rounds[day.rounds.length-1];
+      last.matches.forEach((m,i) => { if(S.currentDraft.matches[i]) m.winner=S.currentDraft.matches[i].winner; });
+    }
+  }
+  finishRound();
+}
+
+function finishRound() {
+  S.currentDraft = null; S.phase = 'draw';
+  save(); renderPhase(); renderHistory(); renderPlayers();
+  toast('Runde gespeichert ✓');
+}
+
+function renderPhase() {
+  const isActive = S.phase==='confirm' || S.phase==='result';
+  document.getElementById('activeRoundSection').classList.toggle('visible', isActive);
+  document.getElementById('drawSection').classList.toggle('hidden', isActive);
+  if (!isActive || !S.currentDraft) return;
+
+  const d = S.currentDraft;
+  document.getElementById('roundBadge').textContent = S.phase==='result' ? 'Läuft' : 'Vorschau';
+
+  document.getElementById('activePause').innerHTML = d.pausing.length
+    ? `<div class="pause-tag">⏸ Pause: ${d.pausing.join(', ')}</div>` : '';
+
+  document.getElementById('activeMatches').innerHTML = d.matches.map(m => {
+    const t = m.type==='Doppel'
+      ? `<span class="team-a">${m.players[0]} / ${m.players[1]}</span><span class="vs-sep">vs</span><span class="team-b">${m.players[2]} / ${m.players[3]}</span>`
+      : `<span class="team-a">${m.players[0]}</span><span class="vs-sep">vs</span><span class="team-b">${m.players[1]}</span>`;
+    return `<div class="match-block"><div class="match-type-tag">${m.type}</div><div class="teams">${t}</div></div>`;
+  }).join('');
+
+  const phA = document.getElementById('phaseA');
+  const phB = document.getElementById('phaseB');
+  if (S.phase === 'confirm') { phA.classList.remove('hidden'); phB.classList.add('hidden'); }
+  else {
+    phA.classList.add('hidden'); phB.classList.remove('hidden');
+    document.getElementById('winnerSelections').innerHTML = S.scoreMode
+      ? d.matches.map((m,mi) => {
+          const la = m.type==='Doppel' ? `${m.players[0]} / ${m.players[1]}` : m.players[0];
+          const lb = m.type==='Doppel' ? `${m.players[2]} / ${m.players[3]}` : m.players[1];
+          return `<div style="margin-bottom:10px;">
+            <div class="winner-label">${m.type} — Gewinner</div>
+            <div class="winner-btns">
+              <button class="w-btn${m.winner==='A'?' selected-a':''}" onclick="setWinner(${mi},'A')">${la} ✓</button>
+              <button class="w-btn${m.winner==='B'?' selected-b':''}" onclick="setWinner(${mi},'B')">${lb} ✓</button>
+            </div></div>`;
+        }).join('') : '';
+  }
+}
+
+function setWinner(mi, side) {
+  S.currentDraft.matches[mi].winner = side;
+  document.querySelectorAll('#winnerSelections .winner-btns')[mi]
+    ?.querySelectorAll('.w-btn').forEach((b,bi) => {
+      b.className = 'w-btn';
+      if (bi===0 && side==='A') b.classList.add('selected-a');
+      if (bi===1 && side==='B') b.classList.add('selected-b');
     });
+}
 
-    function save() { localStorage.setItem('badmintonState_v9', JSON.stringify(state)); }
+// ── PLAYERS ──────────────────────────────────
+function cycleStatus(i) {
+  const p = S.players[i];
+  if (p.active && !p.forcePause)     { p.forcePause=true; }
+  else if (p.active && p.forcePause) { p.active=false; p.forcePause=false; }
+  else                               { p.active=true; }
+  renderPlayers(); save();
+}
+function removePlayer(e,i) {
+  e.stopPropagation();
+  if(confirm('Spieler löschen?')){ S.players.splice(i,1); renderPlayers(); save(); }
+}
+function addPlayer() {
+  const inp = document.getElementById('playerName');
+  const name = inp.value.trim();
+  if (!name) return;
+  if (S.players.find(p=>p.name.toLowerCase()===name.toLowerCase())) { toast('Name bereits vorhanden'); return; }
+  S.players.push(newPlayer(name)); inp.value=''; renderPlayers(); save();
+}
+function renderPlayers() {
+  const grid = document.getElementById('playerGrid');
+  grid.innerHTML = '';
+  let cnt = 0;
+  S.players.forEach((p,i) => {
+    if (p.active && !p.forcePause) cnt++;
+    const cls = p.active ? (p.forcePause?'pausing':'active') : 'inactive';
+    const div = document.createElement('div');
+    div.className = `player-tile ${cls}`;
+    div.onclick = () => cycleStatus(i);
+    div.innerHTML = `${!p.isCore?`<button class="remove-btn" onclick="removePlayer(event,${i})">×</button>`:''}
+      <span class="p-name">${p.name}</span>
+      <span class="p-stats">⏸ ${p.pauseCount} · 🏸 ${p.gamesPlayed}</span>`;
+    grid.appendChild(div);
+  });
+  document.getElementById('activeCount').textContent = `${cnt} aktiv`;
+}
 
-    function resetToDefaults() {
-        state.players = CORE_PLAYERS.map(name => ({ name, active: true, mustPause: false, pauses: 0, isCore: true }));
-        state.history = [];
-        state.interactions = {};
-        save();
-        renderPlayers();
-    }
+// ── COURTS ───────────────────────────────────
+function renderCourts() {
+  const wrap = document.getElementById('courtRows');
+  wrap.innerHTML = '';
+  courts.forEach((c,ci) => {
+    const row = document.createElement('div');
+    row.className = 'court-row';
+    row.innerHTML = `<span class="court-label">${c.label}</span><div class="toggle-group">
+      ${['Doppel','Einzel','Aus'].map(o=>`<button class="toggle-btn${c.mode===o?' selected':''}" data-ci="${ci}" data-val="${o}">${o}</button>`).join('')}
+    </div>`;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.onclick = () => { courts[+btn.dataset.ci].mode=btn.dataset.val; renderCourts(); save(); };
+  });
+}
 
-    function addPlayer() {
-        const input = document.getElementById('playerName');
-        const name = input.value.trim();
-        if (name) {
-            state.players.push({ name, active: true, mustPause: false, pauses: 0, isCore: false });
-            input.value = '';
-            renderPlayers();
-            save();
-        }
-    }
+// ── MANUAL ENTRY ─────────────────────────────
+let manSel = { A:[], B:[] };
+let manType = 'Doppel';
+let manWinner = null;
 
-    function cycleStatus(index) {
-        const p = state.players[index];
-        if (p.active && !p.mustPause) { p.mustPause = true; } 
-        else if (p.mustPause) { p.mustPause = false; p.active = false; } 
-        else { p.active = true; p.mustPause = false; }
-        renderPlayers();
-        save();
-    }
+function openManual() {
+  manSel={A:[],B:[]}; manType='Doppel'; manWinner=null;
+  document.getElementById('manualCard').classList.remove('hidden');
+  document.getElementById('manualTypeGroup').querySelectorAll('.toggle-btn')
+    .forEach(b=>b.classList.toggle('selected', b.dataset.val==='Doppel'));
+  document.getElementById('manualDoubleSec').classList.remove('hidden');
+  document.getElementById('manualSingleSec').classList.add('hidden');
+  document.getElementById('manualWinnerSec').classList.toggle('hidden', !S.scoreMode);
+  renderManualGrids();
+  document.getElementById('manualCard').scrollIntoView({behavior:'smooth'});
+}
 
-    function removePlayer(e, index) {
-        e.stopPropagation();
-        if(confirm('Spieler löschen?')) {
-            state.players.splice(index, 1);
-            renderPlayers();
-            save();
-        }
-    }
+function renderManualGrids() {
+  const pausingNow = S.currentDraft ? S.currentDraft.pausing : [];
+  const allActive  = S.players.filter(p => p.active);
 
-    function renderPlayers() {
-        const grid = document.getElementById('playerGrid');
-        grid.innerHTML = '';
-        let activeCounter = 0;
-        state.players.forEach((p, i) => {
-            if(p.active && !p.mustPause) activeCounter++;
-            const div = document.createElement('div');
-            let statusClass = p.active ? 'active' : 'inactive';
-            if (p.mustPause) statusClass = 'must-pause';
-            div.className = `player-tile ${statusClass}`;
-            div.onclick = () => cycleStatus(i);
-            div.innerHTML = `
-                ${!p.isCore ? `<button onclick="removePlayer(event, ${i})" style="position:absolute; top:2px; right:2px; background:none; border:none; color:var(--danger); font-size:16px;">×</button>` : ''}
-                <span>${p.name}</span>
-                <span class="pause-count">Pausen: ${p.pauses}</span>
-            `;
-            grid.appendChild(div);
+  if (manType === 'Doppel') {
+    const aFull = manSel.A.length >= 2;
+    const bFull = manSel.B.length >= 2;
+
+    // Build dynamic label: show names if selected, else placeholder
+    const labelA = manSel.A.length === 0 ? 'Team A'
+      : manSel.A.length === 1 ? manSel.A[0]
+      : `${manSel.A[0]} / ${manSel.A[1]}`;
+    const labelB = manSel.B.length === 0 ? 'Team B'
+      : manSel.B.length === 1 ? manSel.B[0]
+      : `${manSel.B[0]} / ${manSel.B[1]}`;
+
+    const phase = !aFull ? 'a' : !bFull ? 'b' : 'done';
+    document.getElementById('manDoubleLabel').innerHTML =
+      phase === 'a' ? `<span style="color:var(--accent)">${labelA}</span> <span style="color:var(--muted)">vs</span> ${labelB} — wähle Team A`
+    : phase === 'b' ? `<span style="color:var(--accent)">${labelA}</span> <span style="color:var(--muted)">vs</span> <span style="color:var(--accent2)">${labelB}</span> — wähle Team B`
+    :                 `<span style="color:var(--accent)">${labelA}</span> <span style="color:var(--muted)">vs</span> <span style="color:var(--accent2)">${labelB}</span>`;
+
+    const grid = document.getElementById('manualGrid');
+    grid.innerHTML = '';
+    allActive.forEach(p => {
+      const isA = manSel.A.includes(p.name), isB = manSel.B.includes(p.name);
+      const isPausing = pausingNow.includes(p.name);
+      const div = document.createElement('div');
+      div.className = 'man-tile' + (isA?' sel-a':isB?' sel-b':'');
+      div.innerHTML = p.name + (isPausing ? '<span class="pause-dot"></span>' : '');
+      div.onclick = () => toggleManPlayer(p.name);
+      grid.appendChild(div);
+    });
+  } else {
+    const grid = document.getElementById('manualGridSingle');
+    grid.innerHTML = '';
+    const labelA = manSel.A.length === 0 ? '?' : manSel.A[0];
+    const labelB = manSel.A.length < 2  ? '?' : manSel.A[1];
+    document.getElementById('manDoubleLabel').innerHTML =
+      `<span style="color:var(--accent)">${labelA}</span> <span style="color:var(--muted)">vs</span> <span style="color:var(--accent2)">${labelB}</span>`;
+    allActive.forEach(p => {
+      const isSel = manSel.A.includes(p.name);
+      const div = document.createElement('div');
+      div.className = 'man-tile' + (isSel ? (manSel.A.indexOf(p.name)===0?' sel-a':' sel-b') : '');
+      div.textContent = p.name;
+      div.onclick = () => {
+        if (isSel) manSel.A=manSel.A.filter(n=>n!==p.name);
+        else if (manSel.A.length<2) manSel.A.push(p.name);
+        renderManualGrids();
+      };
+      grid.appendChild(div);
+    });
+  }
+}
+
+function toggleManPlayer(name) {
+  if (manSel.A.includes(name))      { manSel.A=manSel.A.filter(n=>n!==name); }
+  else if (manSel.B.includes(name)) { manSel.B=manSel.B.filter(n=>n!==name); }
+  else if (manSel.A.length < 2)     { manSel.A.push(name); }
+  else if (manSel.B.length < 2)     { manSel.B.push(name); }
+  else { toast('Bereits 4 Spieler ausgewählt'); return; }
+  renderManualGrids();
+}
+
+function saveManual() {
+  if (manType==='Doppel' && (manSel.A.length!==2||manSel.B.length!==2))
+    { toast('Bitte je 2 Spieler für Team A und B wählen'); return; }
+  if (manType==='Einzel' && manSel.A.length!==2)
+    { toast('Bitte genau 2 Spieler wählen'); return; }
+
+  const players = manType==='Doppel' ? [...manSel.A,...manSel.B] : [...manSel.A];
+  const m = { type:manType, players, winner:manWinner, court:null };
+
+  S.draftId++;
+  players.forEach(name => { const p=S.players.find(x=>x.name===name); if(p){p.gamesPlayed++;p.lastPlayed=S.draftId;} });
+  recordMatch(m);
+
+  const date = document.getElementById('docDate').value;
+  let day = S.history.find(h=>h.date===date);
+  if (!day) { day={date,rounds:[]}; S.history.push(day); }
+  day.rounds.push({ matches:[JSON.parse(JSON.stringify(m))], pausing:[] });
+
+  document.getElementById('manualCard').classList.add('hidden');
+  renderPlayers(); renderHistory(); save();
+  toast('Manuell eingetragen ✓');
+}
+
+// ── HISTORY ──────────────────────────────────
+function renderHistory() {
+  const date = document.getElementById('docDate').value;
+  const day  = S.history.find(h=>h.date===date);
+  const list = document.getElementById('historyList');
+  const rounds = day ? day.rounds : [];
+  document.getElementById('historyBadge').textContent = `${rounds.length} Runde${rounds.length!==1?'n':''}`;
+
+  if (!rounds.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:12px;text-align:center;padding:6px 0 2px;">Noch keine Runden heute.</p>';
+    return;
+  }
+  list.innerHTML = [...rounds].reverse().map((r,ri) => {
+    const rndNum = rounds.length - ri;
+    const matchLines = r.matches.map(m => {
+      let txt = m.type==='Doppel'
+        ? `${m.players[0]}/${m.players[1]} vs ${m.players[2]}/${m.players[3]}`
+        : `${m.players[0]} vs ${m.players[1]}`;
+      if (m.winner==='A') txt += ` <span class="winner-tag">🏆 ${m.type==='Doppel'?m.players[0]+'/'+m.players[1]:m.players[0]}</span>`;
+      if (m.winner==='B') txt += ` <span class="winner-tag">🏆 ${m.type==='Doppel'?m.players[2]+'/'+m.players[3]:m.players[1]}</span>`;
+      return `<div class="rnd-match">${txt}</div>`;
+    }).join('');
+    const pauseLine = r.pausing?.length ? `<div class="rnd-pause">⏸ ${r.pausing.join(', ')}</div>` : '';
+    const realIdx = rounds.length-1-ri;
+    return `<div class="history-round">
+      <div class="rnd-header"><span>Runde ${rndNum}</span><button class="delete-btn" onclick="deleteRound('${date}',${realIdx})">🗑</button></div>
+      ${matchLines}${pauseLine}
+    </div>`;
+  }).join('');
+}
+
+function deleteRound(date, idx) {
+  if (!confirm('Runde löschen?')) return;
+  const day = S.history.find(h=>h.date===date);
+  if (!day) return;
+  const r = day.rounds[idx];
+  r.pausing?.forEach(name=>{ const p=S.players.find(x=>x.name===name); if(p&&p.pauseCount>0)p.pauseCount--; });
+  r.matches.forEach(m=>{ m.players.forEach(name=>{ const p=S.players.find(x=>x.name===name); if(p&&p.gamesPlayed>0)p.gamesPlayed--; }); });
+  day.rounds.splice(idx,1);
+  if (!day.rounds.length) S.history=S.history.filter(h=>h.date!==date);
+  renderPlayers(); renderHistory(); save(); toast('Runde gelöscht');
+}
+
+// ── STATS ────────────────────────────────────
+function showStats() {
+  const sc = document.getElementById('statsCard');
+  sc.classList.remove('hidden');
+
+  // Compute wins per player from all history
+  const wins = {}; // name → { total, einzel, doppel }
+  S.history.forEach(day => {
+    day.rounds.forEach(r => {
+      r.matches.forEach(m => {
+        if (!m.winner) return;
+        const winners = m.winner === 'A' ? m.players.slice(0,2) : m.players.slice(2);
+        const isEinzel = m.type === 'Einzel';
+        const winList = isEinzel ? [m.winner==='A'?m.players[0]:m.players[1]] : winners;
+        winList.forEach(name => {
+          if (!wins[name]) wins[name] = { total:0, einzel:0, doppel:0 };
+          wins[name].total++;
+          if (isEinzel) wins[name].einzel++; else wins[name].doppel++;
         });
-        document.getElementById('activeCount').innerText = activeCounter;
-    }
+      });
+    });
+  });
 
-    function triggerShuffle() {
-        const area = document.getElementById('previewArea');
-        area.classList.add('shuffling');
-        setTimeout(() => {
-            area.classList.remove('shuffling');
-            drawMatches();
-        }, 400);
-    }
+  const hasWins = Object.keys(wins).length > 0;
 
-    function getWeight(p1, p2) {
-        const key = [p1, p2].sort().join('|');
-        return state.interactions[key] || 0;
-    }
+  document.getElementById('statsGrid').innerHTML =
+    S.players.filter(p=>p.active).map(p => {
+      const w = wins[p.name] || { total:0, einzel:0, doppel:0 };
+      const winsLine = hasWins
+        ? `🏆 ${w.total} Siege (E: ${w.einzel} · D: ${w.doppel})<br>` : '';
+      return `<div class="stat-item">
+        <div class="stat-name">${p.name}</div>
+        <div class="stat-val">🏸 ${p.gamesPlayed} Spiele<br>${winsLine}⏸ ${p.pauseCount} Pausen</div>
+      </div>`;
+    }).join('');
 
-    function drawMatches() {
-        const poolAvailable = state.players.filter(p => p.active && !p.mustPause);
-        const courts = [
-            parseInt(document.getElementById('c1').value),
-            parseInt(document.getElementById('c2').value),
-            parseInt(document.getElementById('c3').value)
-        ];
-        const totalNeeded = courts.reduce((a, b) => a + b, 0);
-        if (poolAvailable.length < totalNeeded) {
-            alert(`Zu wenig Spieler! Benötigt: ${totalNeeded}, Verfügbar: ${poolAvailable.length}.`);
-            return;
-        }
-        let sorted = [...poolAvailable].sort((a, b) => (b.pauses - a.pauses) || (Math.random() - 0.5));
-        let selected = sorted.slice(0, totalNeeded);
-        let pausingNames = [
-            ...sorted.slice(totalNeeded).map(p => p.name), 
-            ...state.players.filter(p => p.active && p.mustPause).map(p => p.name)
-        ];
-        let matches = [];
-        let left = [...selected];
-        courts.forEach((size, idx) => {
-            if (size === 0) return;
-            let team = [];
-            if (size === 4) {
-                let p1 = left.shift();
-                left.sort((a, b) => getWeight(p1.name, a.name) - getWeight(p1.name, b.name));
-                let p2 = left.shift();
-                let p3 = left.shift();
-                let p4 = left.shift();
-                team = [p1.name, p2.name, p3.name, p4.name];
-            } else { team = left.splice(0, size).map(p => p.name); }
-            matches.push({ type: size === 4 ? 'Doppel' : 'Einzel', court: idx + 1, p: team });
-        });
-        state.currentDraft = { matches, pausing: pausingNames };
-        showPreview();
-    }
+  sc.scrollIntoView({behavior:'smooth'});
+}
 
-    function formatMatch(m) {
-        if (m.type === 'Doppel') return `${m.p[0]}/${m.p[1]} vs ${m.p[2]}/${m.p[3]}`;
-        return `${m.p[0]} vs ${m.p[1]}`;
-    }
+// ── TOAST ────────────────────────────────────
+let toastTimer;
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2200);
+}
 
-    function showPreview() {
-        const area = document.getElementById('previewArea');
-        area.classList.remove('hidden');
-        area.scrollIntoView({ behavior: 'smooth' });
-        document.getElementById('matchPreview').innerHTML = state.currentDraft.matches.map(m => `
-            <div class="match-display">
-                <b>Pl. ${m.court} (${m.type}):</b> ${formatMatch(m)}
-            </div>
-        `).join('');
-        document.getElementById('pausePreview').innerHTML = state.currentDraft.pausing.length ? `Pause: ${state.currentDraft.pausing.join(', ')}` : 'Keine Pause';
-    }
+// ── INIT ─────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  load();
+  document.getElementById('docDate').valueAsDate = new Date();
+  document.getElementById('scoreToggle').checked = S.scoreMode;
 
-    function acceptDraw() {
-        state.currentDraft.pausing.forEach(name => {
-            const p = state.players.find(sp => sp.name === name);
-            if (p) p.pauses++;
-        });
-        state.currentDraft.matches.forEach(m => {
-            if (m.type === 'Doppel') {
-                const k1 = [m.p[0], m.p[1]].sort().join('|');
-                const k2 = [m.p[2], m.p[3]].sort().join('|');
-                state.interactions[k1] = (state.interactions[k1] || 0) + 1;
-                state.interactions[k2] = (state.interactions[k2] || 0) + 1;
-            }
-        });
-        state.players.forEach(p => p.mustPause = false);
-        const date = document.getElementById('docDate').value;
-        let day = state.history.find(h => h.date === date);
-        if (!day) { day = { date, rounds: [] }; state.history.push(day); }
-        day.rounds.push(state.currentDraft);
-        state.currentDraft = null;
-        document.getElementById('previewArea').classList.add('hidden');
-        renderPlayers();
-        renderHistory();
-        save();
-    }
+  renderCourts(); renderPlayers(); renderHistory(); renderPhase();
 
-    function renderHistory() {
-        const date = document.getElementById('docDate').value;
-        const list = document.getElementById('historyList');
-        const day = state.history.find(h => h.date === date);
-        if (!day || !day.rounds.length) {
-            list.innerHTML = '<p style="color:#475569;text-align:center">Noch keine Runden.</p>';
-            return;
-        }
-        list.innerHTML = [...day.rounds].reverse().map((r, i) => `
-            <div class="history-entry">
-                <b style="color:var(--primary)">Runde ${day.rounds.length - i}</b><br>
-                ${r.matches.map(m => `Pl. ${m.court}: ${formatMatch(m)}`).join('<br>')}
-                ${r.pausing.length ? `<div style="color:#b91c1c; font-size:11px; margin-top:4px;">Pause: ${r.pausing.join(', ')}</div>` : ''}
-            </div>
-        `).join('');
-    }
+  document.getElementById('btnAdd').onclick    = addPlayer;
+  document.getElementById('playerName').addEventListener('keydown', e=>{ if(e.key==='Enter')addPlayer(); });
+  document.getElementById('btnDraw').onclick   = startDraw;
+  document.getElementById('btnRedraw').onclick = startDraw;
+  document.getElementById('btnConfirm').onclick  = onConfirm;
+  document.getElementById('btnNextRound').onclick = onNextRound;
+  document.getElementById('docDate').onchange  = renderHistory;
 
-    function fullReset() {
-        if(confirm('Wirklich alle Daten löschen?')) {
-            localStorage.removeItem('badmintonState_v9');
-            location.reload();
-        }
-    }
+  document.getElementById('scoreToggle').onchange = function() {
+    S.scoreMode = this.checked; save();
+    document.getElementById('manualWinnerSec').classList.toggle('hidden', !S.scoreMode);
+  };
+
+  document.getElementById('btnManualAdd').onclick    = openManual;
+  document.getElementById('btnManualCancel').onclick = ()=>document.getElementById('manualCard').classList.add('hidden');
+  document.getElementById('btnManualSave').onclick   = saveManual;
+
+  document.getElementById('manualTypeGroup').querySelectorAll('.toggle-btn').forEach(btn=>{
+    btn.onclick = ()=>{
+      manType=btn.dataset.val; manSel={A:[],B:[]};
+      document.getElementById('manualTypeGroup').querySelectorAll('.toggle-btn')
+        .forEach(b=>b.classList.toggle('selected',b.dataset.val===manType));
+      document.getElementById('manualDoubleSec').classList.toggle('hidden', manType!=='Doppel');
+      document.getElementById('manualSingleSec').classList.toggle('hidden', manType==='Doppel');
+      renderManualGrids();
+    };
+  });
+
+  document.getElementById('manualWinGroup').querySelectorAll('.toggle-btn').forEach(btn=>{
+    btn.onclick = ()=>{
+      manWinner=btn.dataset.val;
+      document.getElementById('manualWinGroup').querySelectorAll('.toggle-btn')
+        .forEach(b=>b.classList.toggle('selected',b.dataset.val===manWinner));
+    };
+  });
+
+  document.getElementById('btnStats').onclick      = showStats;
+  document.getElementById('btnStatsClose').onclick = ()=>document.getElementById('statsCard').classList.add('hidden');
+  document.getElementById('btnReset').onclick      = ()=>{
+    if(confirm('Wirklich alle Daten löschen?')){ localStorage.removeItem(STORAGE_KEY); location.reload(); }
+  };
+});
 </script>
 </body>
 </html>
